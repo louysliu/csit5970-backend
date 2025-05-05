@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+message FrameMessage{
+    string jobID = 1;
+    int32 frameID = 2;
+    bytes frameData = 3;
+}
