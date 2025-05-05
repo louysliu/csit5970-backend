@@ -1,1 +1,7 @@
+# cache
+__pycache__
+
+
+# temperory files
 yolo11n.pt
+test_msg.txt
