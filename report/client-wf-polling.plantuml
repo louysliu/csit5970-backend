@@ -1,0 +1,28 @@
+@startuml
+skinparam activityBackgroundColor #FFF0F5
+skinparam activityBorderColor #FF69B4
+
+start
+:Initialize retry_counter=0;
+repeat
+    :GET /job/{job_id};
+    switch (response.status)
+        case (Success) 
+            :Close progress bars;
+            break;
+        case (Processing)
+            :Update frame counter;
+            :Sleep 2s;
+        case (Failed)
+            :Throw JobException;
+        case (Network Error)
+            :Increment retry_counter;
+            if (retry < max_retry?) then (yes)
+                :Sleep 5s;
+            else (no)
+                :Throw MaxRetryException;
+            endif
+    endswitch
+repeat while (Job incomplete?)
+stop
+@enduml
