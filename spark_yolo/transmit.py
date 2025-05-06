@@ -14,13 +14,16 @@ def encode(job_id, frame_id, frame):
     print("length of message", len(binary_data))  
     with open("test_msg.txt", "wb") as f:
         f.write(binary_data)
-    
-def decode(msg):
-    # decode
+ 
+def parse(msg):
     frame_msg = FrameMessage()
     frame_msg.ParseFromString(msg)
-    frame = Image.open(io.BytesIO(frame_msg.frameData))
-    return frame_msg.jobID, frame_msg.frameID, frame
+    return frame_msg.jobID, frame_msg.frameID, frame_msg.frameDATA
+    
+def decode_img(frame_data):
+    # decode
+    frame = Image.open(io.BytesIO(frame_data))
+    return frame
 
 if __name__ == "__main__":
     jobID = "1"

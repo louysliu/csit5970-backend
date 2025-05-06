@@ -1,14 +1,30 @@
 from ultralytics import YOLO
 import torch
-import base64
-import numpy as np
-import cv2
+import threading
 from transmit import decode
 
-def yolo_detect(job_id, frame_id, frame, model):
+_model = None
+_model_lock = threading.Lock()
+
+def get_model():
+    global _model
+    with _model_lock:
+        if _model is None:
+            _model = YOLO("yolo11n.pt")  # 或 torch.load(...)
+        return _model
+
+def yolo_detect(frame):
+    """
+
+    Args:
+        frame (ndarray, filepath, ...): image
+
+    Returns:
+        list: [{"label": str, "xyxy": list, "conf": float}, {xxx}]
+    """
     if frame is None:
         return {"boxes": {}}
-
+    model = get_model()
     results = model(frame, verbose=False)[0]
     names = results.names
     results_list = []
@@ -17,7 +33,7 @@ def yolo_detect(job_id, frame_id, frame, model):
         xyxy = results.boxes.xyxy[i]
         conf = results.boxes.conf[i]
         results_list.append({"label": cls_i,"xyxy":xyxy.cpu().to(torch.int).tolist(), "conf": conf.item()})
-    return {"boxes": results_list}
+    return results_list
 
 def yolo_test(frame, model):
     if frame is None:
@@ -33,7 +49,7 @@ def yolo_test(frame, model):
     return {"boxes": results_list}
 
 if __name__ == "__main__":
-    model = YOLO("yolo11n.pt")
+    model = YOLO("yolo11n")
     with open("test_msg.txt", "rb") as f:
         msg = f.read()
     job_id, frame_id, frame = decode(msg)
