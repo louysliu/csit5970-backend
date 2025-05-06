@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 
+	"csit5970/backend/server"
+
 	"github.com/gorilla/mux"
 )
 
@@ -40,18 +42,25 @@ func main() {
 	r := mux.NewRouter()
 
 	// Apply the logging middleware
-	r.Use(loggingMiddleware)
+	r.Use(server.LoggingMiddleware)
 
 	// Routes
-	r.HandleFunc("/job/{jobId}", jobStatusHandler).Methods("GET")
-	// r.HandleFunc("/upload", videoUploadHandler).Methods("POST")
+	r.HandleFunc("/job/{jobId}", server.JobStatusHandler).Methods("GET")
+	r.HandleFunc("/upload", server.VideoUploadHandler).Methods("POST")
 
 	log.Printf("Server listening on %s:%d", *host, *port)
+
+	// Initialize the Kafka producer
+	/*
+		if err := server.InitKafkaProducer(); err != nil {
+			log.Panic(err)
+		}
+		defer server.CloseKafkaProducer()
+	*/
 
 	// Start the server
 	err = http.ListenAndServe(fmt.Sprintf("%s:%d", *host, *port), r)
 	if err != nil {
 		log.Panic(err)
 	}
-
 }

@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"log"
@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// loggingMiddleware logs HTTP request details
-func loggingMiddleware(next http.Handler) http.Handler {
+// LoggingMiddleware logs HTTP request details
+func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		next.ServeHTTP(w, r)
