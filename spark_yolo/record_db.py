@@ -1,5 +1,5 @@
-import redis
-import psycopg2
+import asyncio
+from redis.asyncio import Redis
 import json
 from spark_yolo.config import * 
 def update_redis_batch(conn, tasks):
@@ -10,7 +10,7 @@ def update_redis_batch(conn, tasks):
         tasks (dict): {jobID: count, ...}
     """
     for job_id, count in tasks.items():
-        conn.hincrby(job_id, "processed", count)
+        conn.hincrby(REDIS_PROCESSED_TB, job_id, count)
         
 def update_postgreSQL_batch(conn, buffer):
     """_summary_
