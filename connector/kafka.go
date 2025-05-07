@@ -1,4 +1,4 @@
-package server
+package connector
 
 import (
 	"log"
@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	KafkaProducer *kafka.Producer
+	kafkaProducer *kafka.Producer
 	once          sync.Once
 )
 
@@ -17,11 +17,11 @@ func InitKafkaProducer() error {
 	var err error
 	once.Do(func() {
 		config := &kafka.ConfigMap{
-			"bootstrap.servers": "localhost:9094", // Using the external listener port
-			"client.id":         "video-processor",
+			"bootstrap.servers": "localhost:9094",
+			"client.id":         "frame-producer",
 		}
 
-		KafkaProducer, err = kafka.NewProducer(config)
+		kafkaProducer, err = kafka.NewProducer(config)
 		if err != nil {
 			log.Printf("Failed to create producer: %v", err)
 			return
@@ -29,7 +29,7 @@ func InitKafkaProducer() error {
 
 		// Start a goroutine to handle delivery reports
 		go func() {
-			for e := range KafkaProducer.Events() {
+			for e := range kafkaProducer.Events() {
 				switch ev := e.(type) {
 				case *kafka.Message:
 					if ev.TopicPartition.Error != nil {
@@ -44,7 +44,14 @@ func InitKafkaProducer() error {
 
 // CloseKafkaProducer closes the Kafka producer
 func CloseKafkaProducer() {
-	if KafkaProducer != nil {
-		KafkaProducer.Close()
+	if kafkaProducer != nil {
+		kafkaProducer.Close()
 	}
+}
+
+func ProduceToKafka(topic string, value []byte) error {
+	return kafkaProducer.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Value:          value,
+	}, nil)
 }

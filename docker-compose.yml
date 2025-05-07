@@ -3,7 +3,7 @@ services:
     image: bitnami/kafka:3.9.0
     container_name: kafka
     ports:
-      - "9092:9092"
+      - "9094:9094"
     environment:
       - KAFKA_CFG_NODE_ID=0
       - KAFKA_CFG_PROCESS_ROLES=controller,broker

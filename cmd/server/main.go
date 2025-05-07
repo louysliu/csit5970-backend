@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"csit5970/backend/connector"
 	"csit5970/backend/server"
 
 	"github.com/gorilla/mux"
@@ -51,12 +52,14 @@ func main() {
 	log.Printf("Server listening on %s:%d", *host, *port)
 
 	// Initialize the Kafka producer
-	/*
-		if err := server.InitKafkaProducer(); err != nil {
-			log.Panic(err)
-		}
-		defer server.CloseKafkaProducer()
-	*/
+	if err := connector.InitKafkaProducer(); err != nil {
+		log.Panic(err)
+	}
+	defer connector.CloseKafkaProducer()
+
+	// TODO: Initialize Redis client
+
+	// TODO: Initialize Postgres client
 
 	// Start the server
 	err = http.ListenAndServe(fmt.Sprintf("%s:%d", *host, *port), r)

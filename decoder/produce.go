@@ -8,6 +8,11 @@ import (
 	"log"
 	"os"
 	"os/exec"
+
+	"google.golang.org/protobuf/proto"
+
+	"csit5970/backend/connector"
+	"csit5970/backend/framepb"
 )
 
 var (
@@ -68,6 +73,10 @@ func ProduceFrames(videoFile string, jobID string) {
 		log.Printf("Job %s: ffmpeg exited with error: %v\nstderr: %s", jobID, err, stderr.String())
 	}
 
+	// TODO: Write the total frame count to Redis
+
+	// TODO: Set the frame counter in Redis to 0
+
 	log.Printf("Job %s: Produced %d frames", jobID, frameID)
 }
 
@@ -107,12 +116,20 @@ func nextFrame(stream *bufio.Reader) ([]byte, error) {
 
 func sendFrame(frame []byte, jobID string, frameID int32) error {
 	// TODO: Send frame to kafka
+	frameMessage := framepb.FrameMessage{
+		JobID:     jobID,
+		FrameID:   frameID,
+		FrameData: frame,
+	}
 
-	// write to file
-	filename := fmt.Sprintf("decoded/%s-%d.jpg", jobID, frameID)
+	frameBytes, err := proto.Marshal(&frameMessage)
+	if err != nil {
+		return fmt.Errorf("failed to marshal frame protobuf: %v", err)
+	}
 
-	if err := os.WriteFile(filename, frame, 0644); err != nil {
-		return fmt.Errorf("failed to write frame to file: %v", err)
+	err = connector.ProduceToKafka("frames", frameBytes)
+	if err != nil {
+		return fmt.Errorf("failed to produce frame to kafka: %v", err)
 	}
 
 	return nil
