@@ -18,7 +18,15 @@ from spark_yolo.yolo_module import yolo_detect
 
 
 # connection pool. avoid repeated connection stuck
-redis_pool = redis.ConnectionPool(host=REDIS_HOST, port=REDIS_PORT, max_connections=100)
+
+# init redis
+# init once for each tasker
+_redis_conn = None
+def get_redis_connection():
+    global _redis_conn
+    if _redis_conn is None:
+        _redis_conn = redis.Redis(host='localhost', port=6379, db=0)
+    return _redis_conn
 
 # pg_pool = SimpleConnectionPool(
 #     minconn=1, maxconn=10, 
@@ -26,7 +34,7 @@ redis_pool = redis.ConnectionPool(host=REDIS_HOST, port=REDIS_PORT, max_connecti
 # )
 
 def partition_yolo(partition_rows):
-    redis_conn = redis.Redis(connection_pool=redis_pool)
+    redis_conn = get_redis_connection()
     # pg_conn = pg_pool.getconn()
     buffer = []
     task_count = {}
@@ -37,13 +45,12 @@ def partition_yolo(partition_rows):
                 bboxes = yolo_detect(image)
             except Exception as e:
                 print(f"Error during YOLO: {e}")
-            
             try:
                 buffer.append({"jobID": row.jobID, "frameID": row.frameID, "bboxes": bboxes})
                 task_count[row.jobID] = task_count.get(row.jobID, 0) + 1
 
                 # regularly update database and clear buffer
-                if len(buffer) >= 100:
+                if len(buffer) >= REDIS_UPDATE_FREQ:
                     # update_postgreSQL_batch(pg_conn, buffer)
                     update_redis_batch(redis_conn, task_count)
                     buffer.clear()

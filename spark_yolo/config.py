@@ -13,6 +13,7 @@ REDIS_DB = 0
 REDIS_PWD = "password"
 REDIS_PROCESSED_FIELD = "frames_processed"
 REDIS_HASH_JOBID = "jobID"
+REDIS_UPDATE_FREQ = 100
 
 # PostgreSQL
 PGSQL_DATABASE = "db"
