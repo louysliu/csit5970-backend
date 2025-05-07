@@ -2,6 +2,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf, col
 from pyspark.sql.types import StructType, StructField, StringType, BinaryType, IntegerType
 import redis
+import psycopg2
 from psycopg2.pool import SimpleConnectionPool
 
 
@@ -28,6 +29,16 @@ def get_redis_connection():
         _redis_conn = redis.Redis(host='localhost', port=6379, db=0)
     return _redis_conn
 
+def get_pg_connection():
+    global _pg_conn
+    if _pg_conn is None:
+        _pg_conn = psycopg2.connect(
+            dbname=PGSQL_DATABASE,
+            user=PGSQL_USER,
+            password=PGSQL_PWD,
+            host=PGSQL_HOST,
+            port=PGSQL_PORT
+        )
 # pg_pool = SimpleConnectionPool(
 #     minconn=1, maxconn=10, 
 #     dbname=PGSQL_DATABASE, user=PGSQL_USER, password=PGSQL_PWD, host=PGSQL_HOST
@@ -35,6 +46,7 @@ def get_redis_connection():
 
 def partition_yolo(partition_rows):
     redis_conn = get_redis_connection()
+    pgsql_conn = get_pg_connection()
     # pg_conn = pg_pool.getconn()
     buffer = []
     task_count = {}

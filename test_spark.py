@@ -3,16 +3,18 @@ from pyspark.streaming import StreamingContext
 import time
 from collections import defaultdict
 import redis
+import psycopg2
 
 from spark_yolo.transmit import make_test_info, decode_img
 # from spark_yolo.spark_module import partition_yolo
 from spark_yolo.yolo_module import yolo_detect
-from spark_yolo.record_db import update_redis_batch
+from spark_yolo.record_db import update_redis_batch, update_postgreSQL_batch
 from spark_yolo.config import *
 
 # redis_pool = redis.ConnectionPool(host=REDIS_HOST, port=REDIS_PORT, max_connections=100)
 
 _redis_conn = None
+_pg_conn = None
 
 def get_redis_connection():
     global _redis_conn
@@ -20,12 +22,23 @@ def get_redis_connection():
         _redis_conn = redis.Redis(host='localhost', port=6379, db=0)
     return _redis_conn
 
+def get_pg_connection():
+    global _pg_conn
+    if _pg_conn is None:
+        _pg_conn = psycopg2.connect(
+            dbname=PGSQL_DATABASE,
+            user=PGSQL_USER,
+            password=PGSQL_PWD,
+            host=PGSQL_HOST,
+            port=PGSQL_PORT
+        )
+    return _pg_conn
 # 示例数据 - 包含重复jobID的字典列表
 data = make_test_info()
 
 # 初始化Spark上下文
 sc = SparkContext("local[4]", "JobIDPartitionExample")
-ssc = StreamingContext(sc, 2)  # 批处理间隔为2秒
+ssc = StreamingContext(sc, 1)  # 批处理间隔为2秒
 
 # 将数据分成几个批次
 batch_size = 24
@@ -40,6 +53,7 @@ def tasker_process(partition_records):
     # 按jobID分组处理
     # redis_conn = redis.Redis(connection_pool=redis_pool)
     redis_conn = get_redis_connection()
+    pgsql_conn = get_pg_connection()
     buffer = []
     task_count = {}
     print("\nTasker开始处理分区数据:")
@@ -57,7 +71,7 @@ def tasker_process(partition_records):
 
             # regularly update database and clear buffer
             if len(buffer) >= 10:
-                # update_postgreSQL_batch(pg_conn, buffer)
+                update_postgreSQL_batch(pgsql_conn, buffer)
                 update_redis_batch(redis_conn, task_count)
                 buffer.clear()
                 task_count.clear()
@@ -65,6 +79,7 @@ def tasker_process(partition_records):
             print(f"Error during data update: {e}")
     if buffer:
         update_redis_batch(redis_conn, task_count)
+        update_postgreSQL_batch(pgsql_conn, buffer)
     print("分区处理完成")
 
 # 主处理流程

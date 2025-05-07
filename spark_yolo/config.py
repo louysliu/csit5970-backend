@@ -16,9 +16,9 @@ REDIS_HASH_JOBID = "jobID"
 REDIS_UPDATE_FREQ = 100
 
 # PostgreSQL
-PGSQL_DATABASE = "db"
-PGSQL_USER= "user"
+PGSQL_DATABASE = "yolo"
+PGSQL_USER= "tester"
 PGSQL_PWD = "password"
 PGSQL_HOST = "localhost"
 PGSQL_PORT = "5432"
-PGSQL_YOLO_RESULT_TABLE = "yolo_results"
+PGSQL_YOLO_RESULT_TABLE = "bbox"
