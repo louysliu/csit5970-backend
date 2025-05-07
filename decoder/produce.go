@@ -44,6 +44,9 @@ func ProduceFrames(videoFile string, jobID string) {
 		return
 	}
 
+	// Set the frame counter in Redis to 0
+	connector.SetJobField(jobID, "frames_processed", 0)
+
 	stdoutReader := bufio.NewReader(stdout)
 
 	var frameID int32
@@ -73,9 +76,8 @@ func ProduceFrames(videoFile string, jobID string) {
 		log.Printf("Job %s: ffmpeg exited with error: %v\nstderr: %s", jobID, err, stderr.String())
 	}
 
-	// TODO: Write the total frame count to Redis
-
-	// TODO: Set the frame counter in Redis to 0
+	// Write the total frame count to Redis
+	connector.SetJobField(jobID, "frames_total", int(frameID))
 
 	log.Printf("Job %s: Produced %d frames", jobID, frameID)
 }

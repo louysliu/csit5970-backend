@@ -57,7 +57,11 @@ func main() {
 	}
 	defer connector.CloseKafkaProducer()
 
-	// TODO: Initialize Redis client
+	// Initialize Redis client
+	if err := connector.InitRedisClient("localhost:6379"); err != nil {
+		log.Panic(err)
+	}
+	defer connector.CloseRedisClient()
 
 	// TODO: Initialize Postgres client
 
