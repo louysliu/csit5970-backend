@@ -55,7 +55,7 @@ func VideoUploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Job %s: Producing frames", jobID)
+	log.Printf("Job %s: Start producing frames", jobID)
 	go decoder.ProduceFrames(tmpFile.Name(), jobID)
 
 	// return success JSON
