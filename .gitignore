@@ -4,4 +4,5 @@ __pycache__
 
 # temperory files
 yolo11n.pt
-test_msg.txt
+test_msg
+*.mp4

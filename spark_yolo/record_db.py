@@ -10,7 +10,9 @@ def update_redis_batch(conn, tasks):
         tasks (dict): {jobID: count, ...}
     """
     for job_id, count in tasks.items():
-        conn.hincrby(REDIS_PROCESSED_TB, job_id, count)
+        
+        conn.hincrby(job_id, "processed_frames", count)
+        # print(f"jobID: {job_id} adds {count}, current count: {conn.hgetall(job_id)}")
         
 def update_postgreSQL_batch(conn, buffer):
     """_summary_

@@ -11,7 +11,8 @@ REDIS_HOST = "localhost"
 REDIS_PORT = 6379
 REDIS_DB = 0
 REDIS_PWD = "password"
-REDIS_PROCESSED_TB = "frames_processed"
+REDIS_PROCESSED_FIELD = "frames_processed"
+REDIS_HASH_JOBID = "jobID"
 
 # PostgreSQL
 PGSQL_DATABASE = "db"

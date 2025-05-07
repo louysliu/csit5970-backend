@@ -2,7 +2,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf, col
 from pyspark.sql.types import StructType, StructField, StringType, BinaryType, IntegerType
 import redis
-import psycopg2
+from psycopg2.pool import SimpleConnectionPool
 
 
 
@@ -11,18 +11,23 @@ from spark_yolo.record_db import update_redis_batch, update_postgreSQL_batch
 from spark_yolo.transmit import parse, decode_img
 from spark_yolo.yolo_module import yolo_detect
 
+# from config import *
+# from record_db import update_redis_batch, update_postgreSQL_batch
+# from transmit import parse, decode_img
+# from yolo_module import yolo_detect
+
 
 # connection pool. avoid repeated connection stuck
 redis_pool = redis.ConnectionPool(host=REDIS_HOST, port=REDIS_PORT, max_connections=100)
 
-pg_pool = psycopg2.pool.SimpleConnectionPool(
-    minconn=1, maxconn=10, 
-    dbname=PGSQL_DATABASE, user=PGSQL_USER, password=PGSQL_PWD, host=PGSQL_HOST
-)
+# pg_pool = SimpleConnectionPool(
+#     minconn=1, maxconn=10, 
+#     dbname=PGSQL_DATABASE, user=PGSQL_USER, password=PGSQL_PWD, host=PGSQL_HOST
+# )
 
 def partition_yolo(partition_rows):
     redis_conn = redis.Redis(connection_pool=redis_pool)
-    pg_conn = pg_pool.getconn()
+    # pg_conn = pg_pool.getconn()
     buffer = []
     task_count = {}
     try:
@@ -39,7 +44,7 @@ def partition_yolo(partition_rows):
 
                 # regularly update database and clear buffer
                 if len(buffer) >= 100:
-                    update_postgreSQL_batch(pg_conn, buffer)
+                    # update_postgreSQL_batch(pg_conn, buffer)
                     update_redis_batch(redis_conn, task_count)
                     buffer.clear()
                     task_count.clear()
@@ -51,12 +56,10 @@ def partition_yolo(partition_rows):
             update_postgreSQL_batch(pg_conn, buffer)
             update_redis_batch(redis_conn, task_count)
     finally:
-        pg_pool.putconn(pg_conn)  # return the connection
+        pass
+        # pg_pool.putconn(pg_conn)  # return the connection
 
-    
-    
-
-if __name__ == "__main__":
+def run():
     # init session
     spark = SparkSession.builder \
             .appName("YOLO") \
@@ -86,6 +89,12 @@ if __name__ == "__main__":
         
     
     parsed_df.rdd.foreachpartition(partition_yolo)
+    
+def test():
+    pass
+
+if __name__ == "__main__":
+    test()
 
 
 

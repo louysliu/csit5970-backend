@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 import torch
 import threading
-from transmit import decode
+from spark_yolo.transmit import decode_img
 
 _model = None
 _model_lock = threading.Lock()
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     model = YOLO("yolo11n")
     with open("test_msg.txt", "rb") as f:
         msg = f.read()
-    job_id, frame_id, frame = decode(msg)
+    job_id, frame_id, frame = decode_img(msg)
     boxes = yolo_detect(job_id, frame_id, frame, model)
     print(boxes)
     
