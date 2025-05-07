@@ -15,20 +15,16 @@ var (
 	jpegEOI = [2]byte{0xFF, 0xD9}
 )
 
-func ProduceFrames(videoFile io.ReadSeekCloser, jobID string) {
-	defer videoFile.Close()
-	// reset src to start
-	videoFile.Seek(0, io.SeekStart)
+func ProduceFrames(videoFile string, jobID string) {
+	defer os.Remove(videoFile)
 
 	ffmpeg := exec.Command("ffmpeg",
-		"-i", "-", // Read from stdin
+		"-i", videoFile, // Read from stdin
 		// "-vf", fmt.Sprintf("fps=%f"), // set fps
 		"-f", "mjpeg", // Use jpeg
 		"-") // Output to stdout
 
 	var stderr bytes.Buffer
-
-	ffmpeg.Stdin = videoFile
 	ffmpeg.Stderr = &stderr
 
 	stdout, err := ffmpeg.StdoutPipe()
@@ -48,7 +44,7 @@ func ProduceFrames(videoFile io.ReadSeekCloser, jobID string) {
 	var frameID int32
 
 	for frameID = 0; ; frameID++ {
-		frame, err := readFrame(stdoutReader)
+		frame, err := nextFrame(stdoutReader)
 		if err == io.EOF {
 			break
 		} else if err != nil {
@@ -71,10 +67,12 @@ func ProduceFrames(videoFile io.ReadSeekCloser, jobID string) {
 	if err != nil {
 		log.Printf("Job %s: ffmpeg exited with error: %v\nstderr: %s", jobID, err, stderr.String())
 	}
+
+	log.Printf("Job %s: Produced %d frames", jobID, frameID)
 }
 
 // read a single jpeg frame from the stream
-func readFrame(stream *bufio.Reader) ([]byte, error) {
+func nextFrame(stream *bufio.Reader) ([]byte, error) {
 	var buffer bytes.Buffer
 	start, err := stream.Peek(2)
 	if err != nil {

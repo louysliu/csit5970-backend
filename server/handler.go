@@ -2,7 +2,10 @@ package server
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"net/http"
+	"os"
 
 	"csit5970/backend/decoder"
 
@@ -18,20 +21,42 @@ func JobStatusHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func VideoUploadHandler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseMultipartForm(32 << 20); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	r.Body = http.MaxBytesReader(w, r.Body, 128<<20) // 128MB
 
-	file, _, err := r.FormFile("video")
+	reader, err := r.MultipartReader()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	part, err := reader.NextPart()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if part.FormName() != "video" {
+		http.Error(w, "expected video, got "+part.FormName(), http.StatusBadRequest)
+		return
+	}
+
 	jobID := uuid.New().String()
 
-	go decoder.ProduceFrames(file, jobID)
+	tmpFile, err := os.CreateTemp("", fmt.Sprintf("%s.tmp", jobID))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer tmpFile.Close()
+
+	_, err = io.Copy(tmpFile, part)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Job %s: Producing frames", jobID)
+	go decoder.ProduceFrames(tmpFile.Name(), jobID)
 
 	// return success JSON
 	w.WriteHeader(http.StatusOK)
