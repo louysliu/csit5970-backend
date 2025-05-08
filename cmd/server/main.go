@@ -53,7 +53,7 @@ func main() {
 	log.Printf("Server listening on %s:%d", *host, *port)
 
 	// Initialize the Kafka producer
-	if err := connector.InitKafkaProducer(); err != nil {
+	if err := connector.InitKafkaProducer("localhost", 9094, "frame-producer"); err != nil {
 		log.Panic(err)
 	}
 	defer connector.CloseKafkaProducer()

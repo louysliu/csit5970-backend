@@ -1,45 +1,44 @@
 package connector
 
 import (
+	"fmt"
 	"log"
-	"sync"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 var (
 	kafkaProducer *kafka.Producer
-	once          sync.Once
 )
 
 // InitKafkaProducer initializes the Kafka producer as a singleton
-func InitKafkaProducer() error {
+func InitKafkaProducer(host string, port int, clientID string) error {
 	var err error
-	once.Do(func() {
-		config := &kafka.ConfigMap{
-			"bootstrap.servers": "localhost:9094",
-			"client.id":         "frame-producer",
-		}
 
-		kafkaProducer, err = kafka.NewProducer(config)
-		if err != nil {
-			log.Printf("Failed to create producer: %v", err)
-			return
-		}
+	config := &kafka.ConfigMap{
+		"bootstrap.servers": fmt.Sprintf("%s:%d", host, port),
+		"client.id":         clientID,
+	}
 
-		// Start a goroutine to handle delivery reports
-		go func() {
-			for e := range kafkaProducer.Events() {
-				switch ev := e.(type) {
-				case *kafka.Message:
-					if ev.TopicPartition.Error != nil {
-						log.Printf("Delivery failed: %v", ev.TopicPartition.Error)
-					}
+	kafkaProducer, err = kafka.NewProducer(config)
+	if err != nil {
+		log.Printf("Failed to create producer: %v", err)
+		return err
+	}
+
+	// Start a goroutine to handle delivery reports
+	go func() {
+		for e := range kafkaProducer.Events() {
+			switch ev := e.(type) {
+			case *kafka.Message:
+				if ev.TopicPartition.Error != nil {
+					log.Printf("Delivery failed: %v", ev.TopicPartition.Error)
 				}
 			}
-		}()
-	})
-	return err
+		}
+	}()
+
+	return nil
 }
 
 // CloseKafkaProducer closes the Kafka producer
