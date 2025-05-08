@@ -27,6 +27,5 @@ func SetJobField(jobID string, field string, value int) error {
 }
 
 func GetJobField(jobID string, field string) (int, error) {
-	cmd := redisClient.HGet(context.Background(), jobID, field)
-	return cmd.Int()
+	return redisClient.HGet(context.Background(), jobID, field).Int()
 }

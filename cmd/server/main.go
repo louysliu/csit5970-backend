@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -64,6 +65,18 @@ func main() {
 	defer connector.CloseRedisClient()
 
 	// TODO: Initialize Postgres client
+	dbconfig := &connector.PgConfig{
+		Host:         "localhost",
+		Port:         5432,
+		User:         "postgres",
+		Password:     "postgres123",
+		DatabaseName: "yolo",
+	}
+
+	if err := connector.InitPGPool(context.Background(), dbconfig); err != nil {
+		log.Panic(err)
+	}
+	defer connector.ClosePGPool()
 
 	// Start the server
 	err = http.ListenAndServe(fmt.Sprintf("%s:%d", *host, *port), r)

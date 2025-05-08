@@ -17,7 +17,41 @@ func JobStatusHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	jobId := vars["jobId"]
 
-	fmt.Fprintf(w, "Job status for %s", jobId)
+	status, framesTotal, framesProcessed, err := CheckJobStatus(jobId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+
+	switch status {
+	case Success:
+		w.WriteHeader(http.StatusOK)
+		json, err := SuccessJSON(jobId, framesTotal, framesProcessed)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Write(json)
+	case InProgress:
+		w.WriteHeader(http.StatusOK)
+		json, err := InProgressJSON(jobId, framesTotal, framesProcessed)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Write(json)
+	case Failure:
+		w.WriteHeader(http.StatusInternalServerError)
+		json, err := FailureJSON(jobId, "")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Write(json)
+	}
 }
 
 func VideoUploadHandler(w http.ResponseWriter, r *http.Request) {

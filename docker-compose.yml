@@ -35,9 +35,10 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres123
-      POSTGRES_DB: video_process_db
+      POSTGRES_DB: yolo
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./yolo.sql:/docker-entrypoint-initdb.d/init-schema.sql:ro
     networks:
       - app-tier
 
