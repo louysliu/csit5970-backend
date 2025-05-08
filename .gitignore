@@ -1,0 +1,11 @@
+*/out
+**/*.log
+# cache
+__pycache__
+
+
+# temperory files
+yolo11n.pt
+test_msg
+*.mp4
+test_spark.py

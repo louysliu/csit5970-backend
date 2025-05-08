@@ -1,0 +1,24 @@
+@startuml
+skinparam activityBackgroundColor #F0F8FF
+skinparam activityBorderColor #4682B4
+skinparam activityFontSize 12
+
+start
+    :Parse CLI arguments;
+    :Validate input path;
+    if (File exists?) then (yes)
+        :Calculate file size;
+    else (no)
+        :Throw FileNotFoundException;
+        stop
+    endif
+    :Open video file stream;
+    :POST /upload with chunk encoding;
+    if (HTTP 200?) then (yes)
+        :Extract job_id from JSON;
+    else (no)
+        :Handle HTTP error codes;
+        stop
+    endif
+stop
+@enduml

@@ -1,0 +1,15 @@
+@startuml
+skinparam activityBackgroundColor #F0FFF0
+skinparam activityBorderColor #32CD32
+
+start
+    :Generate random class color;
+    :Initialize video writer;
+    while (Frames remaining?)
+        :Read frame buffer;
+        :Apply confidence filter & Draw bounding boxes;
+        :Write to output stream & Update progress bar;
+    endwhile
+    :Output JSON results & Release video handles;
+stop
+@enduml
