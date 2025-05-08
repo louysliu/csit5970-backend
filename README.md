@@ -1,3 +1,15 @@
+## Build and run
+
+```bash
+go run cmd/server/main.go
+```
+
+## Run mock consumer
+
+```bash
+go run cmd/mock-consumer/main.go
+```
+
 ## API Definition
 
 ### Video Upload: ``POST /upload``
